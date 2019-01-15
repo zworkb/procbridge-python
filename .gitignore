@@ -1,0 +1,13 @@
+*.pyc
+/.project
+/.pydevproject
+/bin/
+/include/
+/lib/
+/local/
+/share/
+/pip-selfcheck.json
+/.ipynb_checkpoints/
+/data/
+/src/audiation.egg-info/
+.idea
