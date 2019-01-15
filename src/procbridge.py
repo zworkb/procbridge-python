@@ -291,6 +291,7 @@ class ProcBridgeServer:
         self.delegate = delegate
         self.delegate.server = self
         self.delegate.socket = self.socket
+        self.runlock = threading.Lock()
 
     def start(self):
         self.lock.acquire()
@@ -305,6 +306,7 @@ class ProcBridgeServer:
             t = threading.Thread(target=_start_server_listener, args=(self,))
             t.start()
             self.started = True
+            self.runlock.acquire()
         finally:
             self.lock.release()
 
@@ -316,8 +318,17 @@ class ProcBridgeServer:
             self.socket.close()
             self.socket = None
             self.started = False
+            self.runlock.release()
         finally:
             self.lock.release()
+
+    def wait_for_stop(self):
+        """
+        waits until the ruing server is stopped
+        :return:
+        """
+        if self.started:
+            self.runlock.acquire()
 
     def write_back(self, conn, data):
         """
@@ -418,13 +429,16 @@ def _start_connection(server, s):
                     reply = {}
 
                 resp_to = body[REQ_ID]
-                _write_good_response(s, reply, resp_to=resp_to)
+                if server.started:
+                    _write_good_response(s, reply, resp_to=resp_to)
             except ProcServerPythonException as ex:
                 resp_to=body[REQ_ID]
                 print 'resp_to:', resp_to
-                _write_error_response(s, ex.message, resp_to=resp_to)
+                if server.started:
+                    _write_error_response(s, ex.message, resp_to=resp_to)
             except Exception as ex:
-                _write_bad_response(s, str(ex))
+                if server.started:
+                    _write_bad_response(s, str(ex))
 
     except Exception as e: #TODO: fix that seriously
         raise

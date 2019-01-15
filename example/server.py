@@ -29,6 +29,11 @@ def geterror(self, **kw):
     raise Exception("shit happened")
 
 
+@delegate.api
+def shutdown(self, **kw):
+    self.server.stop()
+
+
 if __name__ == '__main__':
 
     host = '127.0.0.1'
@@ -39,7 +44,9 @@ if __name__ == '__main__':
     server.start()
     print('listening...')
 
-    raw_input("press any key to exit...")
+    # raw_input("press any key to exit...")
 
-    server.stop()
+    server.wait_for_stop()
+
+    # server.stop()
     print('bye!')
